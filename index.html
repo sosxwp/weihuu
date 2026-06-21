@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>蓝莓水肥运维管理系统</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft Yahei",sans-serif;}
+body{background:#f5f9f6;font-size:16px;}
+/* 登录页 */
+.login-wrap{width:100vw;height:100vh;background:linear-gradient(135deg,#2d6a4f,#40916c);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.login-card{background:#fff;width:100%;max-width:360px;border-radius:12px;padding:30px 24px;text-align:center;}
+.login-title{font-size:22px;color:#2d6a4f;margin-bottom:24px;}
+.login-input{width:100%;padding:12px;margin-bottom:12px;border:1px solid #ddd;border-radius:6px;font-size:16px;}
+.login-btn{margin-top:10px;width:100%;padding:12px;background:#2d6a4f;color:#fff;border:none;border-radius:6px;font-size:16px;cursor:pointer;}
+.switch-login-text{margin-top:14px;color:#2d6a4f;cursor:pointer;font-size:14px;}
+.remember-box{text-align:left;margin:8px 0 16px;font-size:14px;}
+.tip-text{font-size:13px;color:#777;margin-top:12px;line-height:1.5;}
+.register-box{display:none;text-align:left;}
+.login-box{text-align:left;}
+/* 顶部导航 */
+.header-bar{background:#2d6a4f;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.header-title{font-size:18px;}
+.header-user-name{font-size:14px;opacity:0.9;}
+.header-btn-group{display:flex;gap:10px;}
+.header-btn{background:rgba(255,255,255,0.2);border:none;color:#fff;padding:6px 12px;border-radius:20px;font-size:14px;cursor:pointer;}
+/* 通用弹窗 */
+.mask{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);z-index:9999;display:none;align-items:center;justify-content:center;}
+.modal{width:90vw;max-width:420px;background:#fff;border-radius:10px;padding:24px;}
+.modal h3{color:#2d6a4f;margin-bottom:18px;text-align:center;}
+.form-item{margin-bottom:14px;}
+.form-item label{display:block;margin-bottom:6px;font-weight:500;color:#222;}
+.form-item input,.form-item select{width:100%;padding:10px 12px;border:1px solid #cad2c5;border-radius:6px;font-size:16px;}
+.btn-group{display:flex;gap:10px;margin-top:20px;}
+.btn-save{flex:1;padding:10px;background:#2d6a4f;color:#fff;border:none;border-radius:6px;}
+.btn-close{flex:1;padding:10px;background:#adb5bd;color:#fff;border:none;border-radius:6px;}
+.account-list-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #eee;margin:6px 0;border-radius:4px;}
+.small-btn{padding:3px 8px;font-size:12px;border:none;border-radius:4px;cursor:pointer;}
+.reset-pwd-btn{background:#3b82f6;color:#fff;}
+.del-acc-btn{background:#ef4444;color:#fff;}
+/* 统计卡片 */
+.stat-wrap{display:flex;gap:12px;flex-wrap:wrap;margin:0 16px 16px;max-width:1300px;margin-left:auto;margin-right:auto;}
+.stat-card{flex:1;min-width:140px;background:#f0fdf4;padding:12px;border-radius:8px;text-align:center;}
+.stat-num{font-size:22px;font-weight:bold;color:#2d6a4f;margin:4px 0;}
+/* 主体布局 */
+.container{display:grid;grid-template-columns:1fr 1.5fr;gap:20px;padding:0 16px 20px;max-width:1300px;margin:0 auto;}
+@media(max-width:900px){.container{grid-template-columns:1fr;}}
+.card{background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 12px rgba(0,80,40,0.1);}
+.card h2{color:#2d6a4f;margin-bottom:18px;font-size:18px;border-left:4px solid #40916c;padding-left:10px;}
+input,select,textarea{width:100%;padding:12px;border:1px solid #cad2c5;border-radius:6px;font-size:16px;}
+textarea{min-height:80px;resize:vertical;}
+.operate-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.operate-bar button{flex:none;padding:8px 12px;font-size:14px;}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.filter-row input{flex:1;min-width:140px;padding:8px;}
+#exportExcel{background:#2b6cb0;color:#fff;}
+.backup-btn{background:#92400e;color:#fff;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th,td{border:1px solid #e2e8e5;padding:10px 6px;text-align:center;}
+th{background:#edf7f2;color:#2d6a4f;}
+.empty-tip{text-align:center;padding:40px;color:#666;}
+.op-btn{padding:4px 8px;font-size:12px;margin:2px;}
+.edit-btn{background:#3b82f6;color:#fff;}
+.del-btn{background:#ef4444;color:#fff;}
+/* 耗材标签 */
+.tag-group{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px;}
+.tag-item{background:#e7f3ee;color:#2d6a4f;padding:4px 10px;border-radius:20px;font-size:14px;cursor:pointer;}
+/* 图片预览 */
+.photo-btn-group{display:flex;gap:10px;margin:8px 0;}
+.photo-btn{background:#52b788;color:#fff;flex:1;padding:8px;}
+#fileInput{display:none;}
+.img-preview-container{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.thumb-img{width:90px;height:90px;object-fit:cover;border:1px solid #ccc;cursor:pointer;}
+.image-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:999;}
+.modal-img{max-width:90%;max-height:90%;}
+/* 点位悬浮按钮 */
+.pos-manage-btn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;background:#2d6a4f;color:#fff;border:none;font-size:26px;z-index:998;}
+.pos-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;max-width:90vw;background:#fff;padding:20px;border-radius:10px;box-shadow:0 0 20px #0004;z-index:1000;display:none;}
+.pos-mask{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0006;z-index:999;display:none;}
+.pos-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid #eee;margin:6px 0;border-radius:4px;}
+.del-pos{background:#e74c3c;color:#fff;border:none;padding:4px 8px;border-radius:4px;}
+/* AI助手 */
+.ai-agent-wrap{position:fixed;right:16px;bottom:90px;z-index:1002;}
+.ai-open-btn{width:60px;height:60px;border-radius:50%;background:#2d6a4f;color:#fff;border:none;font-size:18px;box-shadow:0 4px 14px rgba(45,106,79,0.4);}
+.ai-chat-panel{width:100vw;height:100vh;max-width:100%;max-height:100%;background:#fff;display:none;flex-direction:column;overflow:hidden;position:fixed;top:0;left:0;z-index:9999;}
+.ai-header-bar{padding:14px 16px;background:#2d6a4f;color:#fff;display:flex;justify-content:space-between;align-items:center;font-size:18px;}
+.ai-close-text{cursor:pointer;font-size:22px;}
+.ai-message-box{flex:1;padding:12px;overflow-y:auto;background:#f8fbf9;}
+.ai-input-area{padding:12px;border-top:1px solid #dde7e2;display:flex;gap:8px;flex-wrap:wrap;}
+.ai-text-input{width:100%;height:80px;resize:none;font-size:16px;}
+.ai-btn-row{display:flex;gap:8px;width:100%;}
+.ai-send-button{flex:1;background:#2d6a4f;color:#fff;border:none;border-radius:6px;padding:10px 0;font-size:16px;}
+.ai-img-upload-btn,.ai-clear-img-btn{flex:1;background:#60a5fa;color:#fff;border:none;border-radius:6px;padding:10px 0;font-size:16px;}
+.ai-clear-img-btn{background:#9ca3af;}
+#aiImgFile{display:none;}
+.msg-worker{background:#e7f3ee;padding:12px;border-radius:9px;margin:10px 0;text-align:left;white-space:pre-line;word-break:break-all;line-height:1.6;font-size:16px;}
+.msg-worker .green-text{color:#166534;font-weight:bold;}
+.msg-user-input{background:#d0e9dd;padding:12px;border-radius:9px;margin:10px 0;text-align:right;word-break:break-all;font-size:16px;}
+.chat-preview-img{width:120px;height:120px;object-fit:cover;border-radius:6px;margin-top:8px;}
+.loading-tip{color:#666;text-align:center;padding:10px;font-size:16px;}
+.copy-btn{background:#2d6a4f;color:#fff;padding:6px 10px;border-radius:4px;font-size:14px;margin-top:8px;display:inline-block;cursor:pointer;}
+.sync-img-btn{background:#3b82f6;color:#fff;padding:6px 10px;border-radius:4px;font-size:14px;margin-top:8px;display:inline-block;cursor:pointer;}
+.network-tip{background:#fef3c7;color:#92400e;padding:10px;text-align:center;font-size:16px;}
+/* 新手引导 */
+.guide-mask{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:9999;display:none;align-items:center;justify-content:center;}
+.guide-box{width:90vw;max-width:400px;background:#fff;border-radius:10px;padding:20px;}
+.guide-box h3{margin-bottom:12px;color:#2d6a4f;}
+.guide-step{margin:10px 0;line-height:1.6;}
+.guide-close{width:100%;margin-top:12px;background:#2d6a4f;color:#fff;border:none;padding:10px;border-radius:6px;cursor:pointer;}
+/* 权限隐藏 */
+.main-page{display:none;}
+.hide-for-worker{display:block;}
+</style>
+</head>
+<body>
+<!-- 登录界面 -->
+<div class="login-wrap" id="loginWrap">
+<div class="login-card">
+<div class="login-title">蓝莓水肥运维管理系统</div>
+<div class="login-box" id="loginBox">
+<input class="login-input" id="loginAccount" placeholder="登录账号">
+<input class="login-input" id="loginPwd" type="password" placeholder="登录密码">
+<div class="remember-box">
+<input type="checkbox" id="rememberLogin">
+<label for="rememberLogin">记住本机登录（30天免登）</label>
+</div>
+<button class="login-btn" id="loginBtn">登录系统</button>
+<div class="switch-login-text" id="toRegister">没有账号？立即自助注册</div>
+<div class="tip-text">默认管理员账号：admin 密码：123456</div>
+</div>
+<div class="register-box" id="registerBox">
+<input class="login-input" id="regAccount" placeholder="自定义登录账号">
+<input class="login-input" id="regPwd" type="password" placeholder="自定义登录密码">
+<input class="login-input" id="regNick" placeholder="自定义昵称（顶部展示）">
+<select class="login-input" id="regRole">
+<option value="worker">维修员（仅录入记录）</option>
+<option value="admin">管理员（全部权限）</option>
+</select>
+<button class="login-btn" id="regBtn">完成注册</button>
+<div class="switch-login-text" id="toLogin">已有账号？返回登录</div>
+</div>
+</div>
+</div>
+
+<!-- 主页面 -->
+<div class="main-page" id="mainPage">
+<div class="header-bar">
+<div>
+<div class="header-title">彩云农场水肥设备运维台账管理系统</div>
+<div class="header-user-name" id="currentNick">当前用户：-</div>
+</div>
+<div class="header-btn-group">
+<button class="header-btn" id="openUserInfo">我的个人信息</button>
+<button class="header-btn hide-for-worker" id="openAdminPanel">账号管理后台</button>
+<button class="header-btn" id="logoutBtn">退出登录</button>
+</div>
+</div>
+
+<!-- 个人信息弹窗 -->
+<div class="mask" id="userMask">
+<div class="modal">
+<h3>个人基础信息</h3>
+<div class="form-item">
+<label>姓名</label>
+<input type="text" id="userName" placeholder="姓名">
+</div>
+<div class="form-item">
+<label>岗位</label>
+<input type="text" id="userJob" placeholder="维修员/管理员">
+</div>
+<div class="form-item">
+<label>所属园区</label>
+<input type="text" id="userPark" placeholder="彩云蓝莓基地">
+</div>
+<div class="form-item">
+<label>联系电话</label>
+<input type="text" id="userPhone" placeholder="手机号">
+</div>
+<div class="btn-group">
+<button class="btn-save" id="saveUserBtn">保存</button>
+<button class="btn-close" id="closeUserBtn">关闭</button>
+</div>
+</div>
+</div>
+
+<!-- 管理员账号后台 -->
+<div class="mask" id="adminMask">
+<div class="modal">
+<h3>账号管理后台（仅管理员可用）</h3>
+<div class="form-item">
+<label>新增员工账号</label>
+<input type="text" id="newAcc" placeholder="账号">
+</div>
+<div class="form-item">
+<label>登录密码</label>
+<input type="text" id="newPwd" placeholder="密码">
+</div>
+<div class="form-item">
+<label>昵称</label>
+<input type="text" id="newNick" placeholder="展示昵称">
+</div>
+<div class="form-item">
+<label>角色</label>
+<select id="newRole">
+<option value="worker">维修员</option>
+<option value="admin">管理员</option>
+</select>
+</div>
+<button class="btn-save" id="addAccBtn" style="width:100%;margin-bottom:12px">添加账号</button>
+<h4 style="margin:10px 0">全部账号列表</h4>
+<div id="accListBox"></div>
+<div class="btn-group">
+<button class="btn-save" id="exportAccBtn">导出账号备份</button>
+<button class="btn-close" id="closeAdminBtn">关闭</button>
+</div>
+</div>
+</div>
+
+<!-- 新手引导 -->
+<div class="guide-mask" id="guideMask">
+<div class="guide-box">
+<h3>欢迎使用蓝莓水肥运维系统</h3>
+<div class="guide-step">1.左侧表单：录入故障、上传现场照片，保存维修台账</div>
+<div class="guide-step">2.右侧档案：按阀区/维修人/日期筛选，支持导出备份</div>
+<div class="guide-step">3.右下角【AI助手】：文字+图片咨询设备维修方案</div>
+<div class="guide-step hide-for-worker">4.管理员：顶部账号后台可新增员工、导出全部台账</div>
+<button class="guide-close" id="guideCloseBtn">我知道了，开始使用</button>
+</div>
+</div>
+
+<!-- 统计卡片 -->
+<div class="stat-wrap hide-for-worker" id="statWrap">
+<div class="stat-card">
+<div>本月总维修</div>
+<div class="stat-num" id="totalMonth">0</div>
+</div>
+<div class="stat-card">
+<div>高频故障阀区</div>
+<div class="stat-num" id="hotArea">-</div>
+</div>
+<div class="stat-card">
+<div>TOP故障设备</div>
+<div class="stat-num" id="hotDevice">-</div>
+</div>
+</div>
+
+<div class="container">
+<div class="card">
+<h2>新增维修记录（自动记忆上次填写）</h2>
+<form id="repairForm">
+<div class="form-item">
+<label>阀区选择</label>
+<select id="areaSelect" required>
+<option value="">请先选择阀区</option>
+<option value="泵房">泵房</option>
+<option value="S1">S1分区</option>
+<option value="S2">S2分区</option>
+<option value="S3">S3分区</option>
+<option value="S4">S4分区</option>
+<option value="S5">S5分区</option>
+<option value="S6">S6分区</option>
+<option value="S7">S7分区</option>
+<option value="S8">S8分区</option>
+<option value="S9">S9分区</option>
+<option value="S10">S10分区</option>
+<option value="S11">S11分区</option>
+<option value="S12">S12分区</option>
+<option value="S13">S13分区</option>
+<option value="S14">S14分区</option>
+<option value="S15">S15分区</option>
+<option value="S16">S16分区</option>
+<option value="S17">S17分区</option>
+<option value="S18">S18分区</option>
+</select>
+</div>
+<div class="form-item">
+<label>维修位置</label>
+<select id="positionSelect" required>
+<option value="">请先选择上方阀区</option>
+</select>
+</div>
+<div class="form-item">
+<label>临时自定义位置</label>
+<input type="text" id="customPlace" placeholder="无特殊位置留空">
+</div>
+<div class="form-item">
+<label>故障详细描述</label>
+<textarea id="faultDesc" required placeholder="管路破裂、阀门漏水、堵塞不出水等"></textarea>
+<div class="photo-btn-group">
+<button type="button" class="photo-btn" id="openPicSelect">拍照/选取故障图片</button>
+<input type="file" id="fileInput" accept="image/*" multiple>
+</div>
+<div class="img-preview-container" id="previewBox"></div>
+</div>
+<div class="form-item">
+<label>维修方案与操作步骤</label>
+<textarea id="repairMethod" required placeholder="可直接复制AI助手给出的维修方案"></textarea>
+</div>
+<div class="form-item">
+<label>消耗耗材/配件（点击标签快速填充）</label>
+<div class="tag-group" id="tagGroup">
+<span class="tag-item" data-val="PE直通">PE直通</span>
+<span class="tag-item" data-val="塑料球阀">塑料球阀</span>
+<span class="tag-item" data-val="O型密封圈">O型密封圈</span>
+<span class="tag-item" data-val="过滤滤芯">过滤滤芯</span>
+<span class="tag-item" data-val="疏通针">疏通针</span>
+<span class="tag-item" data-val="除垢酸">除垢酸</span>
+<span class="tag-item" data-val="电磁阀线圈">电磁阀线圈</span>
+</div>
+<input type="text" id="materials" placeholder="密封胶、接头、管线等">
+</div>
+<div class="form-item">
+<label>维修人员</label>
+<input type="text" id="repairPerson" required placeholder="维修负责人姓名">
+</div>
+<div class="form-item">
+<label>维修时长（小时）</label>
+<input type="number" step="0.1" min="0" id="repairHour" required placeholder="1.5">
+</div>
+<div class="form-item">
+<label>维修日期</label>
+<input type="date" id="repairDate" required>
+</div>
+<div class="btn-group">
+<button type="submit" id="submitBtn">保存存档</button>
+<button type="button" id="clearBtn">清空表单</button>
+</div>
+</form>
+</div>
+
+<div class="card">
+<h2>历史维修档案</h2>
+<div class="filter-row">
+<input type="text" id="filterArea" placeholder="按阀区筛选">
+<input type="text" id="filterUser" placeholder="按维修人筛选">
+<input type="date" id="filterStart">
+<input type="date" id="filterEnd">
+</div>
+<div class="operate-bar">
+<button id="searchBtn">检索</button>
+<button id="resetSearch">重置筛选</button>
+<button class="hide-for-worker" id="exportExcel">导出Excel台账</button>
+<button class="backup-btn hide-for-worker" id="backupAll">一键全量备份</button>
+</div>
+<div id="recordBox">
+<div class="empty-tip">暂无维修记录，请在左侧表单录入</div>
+</div>
+</div>
+</div>
+
+<div class="image-modal" id="imgModal">
+<img class="modal-img" id="modalImg">
+</div>
+
+<button class="pos-manage-btn hide-for-worker" id="openPosManage">+</button>
+<div class="pos-mask" id="posMask"></div>
+<div class="pos-modal" id="posModal">
+<h3 style="margin-bottom:15px">维修位置管理</h3>
+<div style="display:flex;gap:8px;margin-bottom:15px">
+<input type="text" id="newPosInput" placeholder="新增维修位置">
+<button id="addNewPos" style="width:80px">添加</button>
+</div>
+<div id="posListBox"></div>
+<button id="closePosModal" style="width:100%;margin-top:15px;background:#666;color:#fff;border:none;padding:10px;border-radius:6px;cursor:pointer;">关闭</button>
+</div>
+
+<div class="ai-agent-wrap">
+<button class="ai-open-btn" id="aiOpen">AI助手</button>
+<div class="ai-chat-panel" id="aiChatPanel">
+<div class="ai-header-bar">
+<span>水肥AI助手</span>
+<span class="ai-close-text" id="aiClose">×</span>
+</div>
+<div class="network-tip" id="networkTip" style="display:none;"></div>
+<div class="ai-message-box" id="aiMsgBox">
+<div class="msg-worker">你好，有任何灌溉、水肥设备故障、保养、耗材备货直接描述，无网络仅支持本地文字故障查询，图片识图功能关闭。
+支持查询：故障维修、季度保养流程、园区耗材备货清单、设备使用寿命参考。</div>
+</div>
+<div class="ai-input-area">
+<textarea class="ai-text-input" id="aiInput" placeholder="直接描述设备故障，无固定格式"></textarea>
+<input type="file" id="aiImgFile" accept="image/*">
+<div class="ai-btn-row">
+<button class="ai-img-upload-btn" id="aiUploadImgBtn">上传故障图片</button>
+<button class="ai-clear-img-btn" id="aiClearImgBtn">清除图片</button>
+<button class="ai-send-button" id="aiSend">发送分析</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// 存储常量
+const ACCOUNT_LIST_KEY = "sys_account_list";
+const LOGIN_TOKEN_KEY = "sys_login_token";
+const LOGIN_EXPIRE_KEY = "sys_login_expire";
+const USER_INFO_KEY = "user_info_data";
+const RECORD_KEY = "cyfarm_repair_record";
+const POS_KEY = "cyfarm_position_list";
+const FORM_MEM_KEY = "form_memory";
+const AI_CHAT_KEY = "ai_chat_history";
+const GUIDE_KEY = "guide_showed";
+// 默认管理员
+const DEFAULT_ADMIN = {account:"admin",pwd:"123456",nick:"系统管理员",role:"admin"};
+let accountList = JSON.parse(localStorage.getItem(ACCOUNT_LIST_KEY)) || [DEFAULT_ADMIN];
+let loginUser = null;
+let isAdmin = false;
+// 业务数据
+let positionList = JSON.parse(localStorage.getItem(POS_KEY)) || ["清水管", "肥水管", "主管带", "田间首部", "球阀", "止回阀", "毛管", "滴件"];
+let recordList = JSON.parse(localStorage.getItem(RECORD_KEY)) || [];
+let formMemory = JSON.parse(localStorage.getItem(FORM_MEM_KEY)) || {};
+let aiChatHistory = JSON.parse(localStorage.getItem(AI_CHAT_KEY)) || [];
+let userInfo = JSON.parse(localStorage.getItem(USER_INFO_KEY)) || {name:"",job:"",park:"",phone:""};
+let currentUploadImgs = [];
+let aiUploadImgSrc = "";
+
+// DOM缓存
+const loginWrap = document.getElementById("loginWrap");
+const mainPage = document.getElementById("mainPage");
+const loginBox = document.getElementById("loginBox");
+const registerBox = document.getElementById("registerBox");
+const toRegister = document.getElementById("toRegister");
+const toLogin = document.getElementById("toLogin");
+const loginAccount = document.getElementById("loginAccount");
+const loginPwd = document.getElementById("loginPwd");
+const rememberLogin = document.getElementById("rememberLogin");
+const loginBtn = document.getElementById("loginBtn");
+const regAccount = document.getElementById("regAccount");
+const regPwd = document.getElementById("regPwd");
+const regNick = document.getElementById("regNick");
+const regRole = document.getElementById("regRole");
+const regBtn = document.getElementById("regBtn");
+const currentNick = document.getElementById("currentNick");
+const logoutBtn = document.getElementById("logoutBtn");
+const userMask = document.getElementById("userMask");
+const openUserInfo = document.getElementById("openUserInfo");
+const closeUserBtn = document.getElementById("closeUserBtn");
+const saveUserBtn = document.getElementById("saveUserBtn");
+const userName = document.getElementById("userName");
+const userJob = document.getElementById("userJob");
+const userPark = document.getElementById("userPark");
+const userPhone = document.getElementById("userPhone");
+const openAdminPanel = document.getElementById("openAdminPanel");
+const adminMask = document.getElementById("adminMask");
+const newAcc = document.getElementById("newAcc");
+const newPwd = document.getElementById("newPwd");
+const newNick = document.getElementById("newNick");
+const newRole = document.getElementById("newRole");
+const addAccBtn = document.getElementById("addAccBtn");
+const accListBox = document.getElementById("accListBox");
+const closeAdminBtn = document.getElementById("closeAdminBtn");
+const exportAccBtn = document.getElementById("exportAccBtn");
+const guideMask = document.getElementById("guideMask");
+const guideCloseBtn = document.getElementById("guideCloseBtn");
+const aiChatPanel = document.getElementById("aiChatPanel");
+const aiMsgBox = document.getElementById("aiMsgBox");
+const aiInput = document.getElementById("aiInput");
+const aiOpen = document.getElementById("aiOpen");
+const aiClose = document.getElementById("aiClose");
+const aiSend = document.getElementById("aiSend");
+const aiImgFile = document.getElementById("aiImgFile");
+const aiUploadImgBtn = document.getElementById("aiUploadImgBtn");
+const aiClearImgBtn = document.getElementById("aiClearImgBtn");
+const networkTip = document.getElementById("networkTip");
+const areaSelect = document.getElementById("areaSelect");
+const positionSelect = document.getElementById("positionSelect");
+const imgModal = document.getElementById("imgModal");
+const modalImg = document.getElementById("modalImg");
+const posModal = document.getElementById("posModal");
+const posMask = document.getElementById("posMask");
+const posListBox = document.getElementById("posListBox");
+const newPosInput = document.getElementById("newPosInput");
+const addNewPos = document.getElementById("addNewPos");
+const closePosModal = document.getElementById("closePosModal");
+const recordBox = document.getElementById("recordBox");
+const searchBtn = document.getElementById("searchBtn");
+const resetSearch = document.getElementById("resetSearch");
+const exportExcel = document.getElementById("exportExcel");
+const backupAll = document.getElementById("backupAll");
+const filterArea = document.getElementById("filterArea");
+const filterUser = document.getElementById("filterUser");
+const filterStart = document.getElementById("filterStart");
+const filterEnd = document.getElementById("filterEnd");
+const totalMonth = document.getElementById("totalMonth");
+const hotArea = document.getElementById("hotArea");
+const hotDevice = document.getElementById("hotDevice");
+const repairForm = document.getElementById("repairForm");
+const clearBtn = document.getElementById("clearBtn");
+const fileInput = document.getElementById("fileInput");
+const openPicSelect = document.getElementById("openPicSelect");
+const previewBox = document.getElementById("previewBox");
+const tagGroup = document.getElementById("tagGroup");
+
+// 登录注册面板切换
+toRegister.onclick = function(){
+    loginBox.style.display = "none";
+    registerBox.style.display = "block";
+}
+toLogin.onclick = function(){
+    registerBox.style.display = "none";
+    loginBox.style.display = "block";
+}
+
+// 注册按钮事件
+regBtn.onclick = function(){
+    const acc = regAccount.value.trim();
+    const pwd = regPwd.value.trim();
+    const nick = regNick.value.trim();
+    const role = regRole.value;
+    if(!acc || !pwd || !nick){
+        alert("账号、密码、昵称不能为空");
+        return;
+    }
+    const exist = accountList.find(item=>item.account === acc);
+    if(exist){
+        alert("账号已存在，请更换");
+        return;
+    }
+    accountList.push({account:acc,pwd:pwd,nick:nick,role:role});
+    localStorage.setItem(ACCOUNT_LIST_KEY, JSON.stringify(accountList));
+    alert("注册成功，返回登录");
+    registerBox.style.display = "none";
+    loginBox.style.display = "block";
+}
+
+// 登录按钮核心事件（可正常点击）
+loginBtn.onclick = function(){
+    const acc = loginAccount.value.trim();
+    const pwd = loginPwd.value.trim();
+    const target = accountList.find(item=>item.account === acc && item.pwd === pwd);
+    if(!target){
+        alert("账号或密码错误");
+        return;
+    }
+    loginUser = target;
+    // 30天免登
+    if(rememberLogin.checked){
+        const expire = Date.now() + 30 * 24 * 60 * 60 * 1000;
+        localStorage.setItem(LOGIN_TOKEN_KEY, acc);
+        localStorage.setItem(LOGIN_EXPIRE_KEY, expire);
+    }else{
+        localStorage.setItem(LOGIN_TOKEN_KEY, acc);
+        localStorage.setItem(LOGIN_EXPIRE_KEY, Date.now() + 24*3600*1000);
+    }
+    renderAfterLogin();
+}
+
+// 退出登录
+logoutBtn.onclick = function(){
+    localStorage.removeItem(LOGIN_TOKEN_KEY);
+    localStorage.removeItem(LOGIN_EXPIRE_KEY);
+    location.reload();
+}
+
+// 登录成功渲染页面
+function renderAfterLogin(){
+    loginWrap.style.display = "none";
+    mainPage.style.display = "block";
+    currentNick.innerText = "当前用户：" + loginUser.nick;
+    isAdmin = loginUser.role === "admin";
+    document.querySelectorAll(".hide-for-worker").forEach(el=>{
+        el.style.display = isAdmin ? "block" : "none";
+    });
+    userName.value = userInfo.name;
+    userJob.value = userInfo.job;
+    userPark.value = userInfo.park;
+    userPhone.value = userInfo.phone;
+    initGuide();
+    loadFormMemory();
+    refreshPositionSelect();
+    renderPosManageList();
+    renderAllRecord();
+    calcMonthStat();
+}
+
+// 页面加载自动免登检测
+function checkAutoLogin(){
+    const token = localStorage.getItem(LOGIN_TOKEN_KEY);
+    const expire = localStorage.getItem(LOGIN_EXPIRE_KEY);
+    if(!token || !expire) return false;
+    if(Date.now() > Number(expire)){
+        localStorage.removeItem(LOGIN_TOKEN_KEY);
+        localStorage.removeItem(LOGIN_EXPIRE_KEY);
+        return false;
+    }
+    loginUser = accountList.find(item=>item.account === token);
+    if(!loginUser) return false;
+    renderAfterLogin();
+    return true;
+}
+
+window.onload = function(){
+    checkAutoLogin();
+}
+
+// 个人信息弹窗
+openUserInfo.onclick = ()=> userMask.style.display = "flex";
+closeUserBtn.onclick = ()=> userMask.style.display = "none";
+saveUserBtn.onclick = function(){
+    userInfo.name = userName.value.trim();
+    userInfo.job = userJob.value.trim();
+    userInfo.park = userPark.value.trim();
+    userInfo.phone = userPhone.value.trim();
+    localStorage.setItem(USER_INFO_KEY, JSON.stringify(userInfo));
+    alert("保存成功");
+    userMask.style.display = "none";
+}
+
+// 管理员账号后台
+openAdminPanel.onclick = ()=>{
+    adminMask.style.display = "flex";
+    renderAccountList();
+}
+closeAdminBtn.onclick = ()=> adminMask.style.display = "none";
+addAccBtn.onclick = function(){
+    const acc = newAcc.value.trim();
+    const pwd = newPwd.value.trim();
+    const nick = newNick.value.trim();
+    const role = newRole.value;
+    if(!acc || !pwd || !nick){
+        alert("信息不能为空");
+        return;
+    }
+    if(accountList.find(x=>x.account === acc)){
+        alert("账号已存在");
+        return;
+    }
+    accountList.push({account:acc,pwd:pwd,nick:nick,role:role});
+    localStorage.setItem(ACCOUNT_LIST_KEY, JSON.stringify(accountList));
+    alert("添加成功");
+    newAcc.value = "";
+    newPwd.value = "";
+    newNick.value = "";
+    renderAccountList();
+}
+function renderAccountList(){
+    accListBox.innerHTML = "";
+    accountList.forEach((item,idx)=>{
+        const div = document.createElement("div");
+        div.className = "account-list-item";
+        div.innerHTML = `
+            <span>${item.account}｜昵称：${item.nick}｜${item.role==="admin"?"管理员":"维修员"}</span>
+            <div>
+                <button class="small-btn reset-pwd-btn" data-i="${idx}">重置123456</button>
+                ${item.account!=="admin" ? `<button class="small-btn del-acc-btn" data-i="${idx}">删除</button>`:""}
+            </div>
+        `;
+        accListBox.appendChild(div);
+    })
+    document.querySelectorAll(".reset-pwd-btn").forEach(btn=>{
+        btn.onclick = function(){
+            const i = Number(this.dataset.i);
+            accountList[i].pwd = "123456";
+            localStorage.setItem(ACCOUNT_LIST_KEY, JSON.stringify(accountList));
+            alert("密码重置完成");
+            renderAccountList();
+        }
+    })
+    document.querySelectorAll(".del-acc-btn").forEach(btn=>{
+        btn.onclick = function(){
+            const i = Number(this.dataset.i);
+            if(confirm("确认删除？")){
+                accountList.splice(i,1);
+                localStorage.setItem(ACCOUNT_LIST_KEY, JSON.stringify(accountList));
+                renderAccountList();
+            }
+        }
+    })
+}
+exportAccBtn.onclick = function(){
+    const str = JSON.stringify(accountList,null,2);
+    const blob = new Blob([str],{type:"text/plain"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "账号备份.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// 新手引导
+function initGuide(){
+    if(!localStorage.getItem(GUIDE_KEY)){
+        guideMask.style.display = "flex";
+        localStorage.setItem(GUIDE_KEY, GUIDE_KEY);
+    }
+}
+guideCloseBtn.onclick = ()=> guideMask.style.display = "none";
+
+// 耗材标签点击填充
+tagGroup.querySelectorAll(".tag-item").forEach(tag=>{
+    tag.onclick = function(){
+        const val = this.dataset.val;
+        const mat = document.getElementById("materials");
+        mat.value = mat.value.trim() ? mat.value + "、" + val : val;
+    }
+})
+
+// 维修点位
+function refreshPositionSelect(){
+    const area = areaSelect.value;
+    positionSelect.innerHTML = '<option value="">请选择维修位置</option>';
+    if(!area) return;
+    positionList.forEach(p=>{
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.innerText = p;
+        positionSelect.appendChild(opt);
+    })
+}
+areaSelect.onchange = refreshPositionSelect;
+openPosManage.onclick = ()=>{
+    posMask.style.display = "block";
+    posModal.style.display = "block";
+}
+closePosModal.onclick = ()=>{
+    posMask.style.display = "none";
+    posModal.style.display = "none";
+}
+posMask.onclick = ()=>{
+    posMask.style.display = "none";
+    posModal.style.display = "none";
+}
+addNewPos.onclick = function(){
+    const val = newPosInput.value.trim();
+    if(!val) return;
+    positionList.push(val);
+    localStorage.setItem(POS_KEY, JSON.stringify(positionList));
+    newPosInput.value = "";
+    renderPosManageList();
+}
+function renderPosManageList(){
+    posListBox.innerHTML = "";
+    positionList.forEach((item,idx)=>{
+        const div = document.createElement("div");
+        div.className = "pos-item";
+        div.innerHTML = `<span>${item}</span><button class="del-pos" data-i="${idx}">删除</button>`;
+        posListBox.appendChild(div);
+    })
+    document.querySelectorAll(".del-pos").forEach(btn=>{
+        btn.onclick = function(){
+            const i = Number(this.dataset.i);
+            positionList.splice(i,1);
+            localStorage.setItem(POS_KEY, JSON.stringify(positionList));
+            renderPosManageList();
+        }
+    })
+}
+
+// 图片上传预览
+openPicSelect.onclick = ()=> fileInput.value = "";
+fileInput.onchange = function(){
+    const files = this.files;
+    for(let f of files){
+        const reader = new FileReader();
+        reader.onload = e=>{
+            currentUploadImgs.push(e.target.result);
+            renderImgPreview();
+        }
+        reader.readAsDataURL(f);
+    }
+}
+function renderImgPreview(){
+    previewBox.innerHTML = "";
+    currentUploadImgs.forEach(src=>{
+        const img = document.createElement("img");
+        img.className = "thumb-img";
+        img.src = src;
+        img.onclick = ()=>{
+            modalImg.src = src;
+            imgModal.style.display = "flex";
+        }
+        previewBox.appendChild(img);
+    })
+}
+imgModal.onclick = ()=> imgModal.style.display = "none";
+
+// 表单记忆
+function loadFormMemory(){
+    if(formMemory.person) document.getElementById("repairPerson").value = formMemory.person;
+    if(formMemory.area) areaSelect.value = formMemory.area;
+    if(formMemory.material) document.getElementById("materials").value = formMemory.material;
+}
+function saveFormMemory(){
+    formMemory.person = document.getElementById("repairPerson").value.trim();
+    formMemory.area = areaSelect.value;
+    formMemory.material = document.getElementById("materials").value.trim();
+    localStorage.setItem(FORM_MEM_KEY, JSON.stringify(formMemory));
+}
+
+// 台账渲染、筛选、导出
+repairForm.onsubmit = function(e){
+    e.preventDefault();
+    const data = {
+        id: Date.now(),
+        area: areaSelect.value,
+        position: positionSelect.value,
+        custom: document.getElementById("customPlace").value.trim(),
+        fault: document.getElementById("faultDesc").value.trim(),
+        method: document.getElementById("repairMethod").value.trim(),
+        material: document.getElementById("materials").value.trim(),
+        person: document.getElementById("repairPerson").value.trim(),
+        hour: document.getElementById("repairHour").value,
+        date: document.getElementById("repairDate").value,
+        imgs: JSON.parse(JSON.stringify(currentUploadImgs)),
+        createUser: loginUser.account
+    };
+    recordList.unshift(data);
+    localStorage.setItem(RECORD_KEY, JSON.stringify(recordList));
+    saveFormMemory();
+    alert("记录保存成功");
+    repairForm.reset();
+    currentUploadImgs = [];
+    previewBox.innerHTML = "";
+    renderAllRecord();
+    calcMonthStat();
+}
+document.getElementById("clearBtn").onclick = function(){
+    repairForm.reset();
+    currentUploadImgs = [];
+    previewBox.innerHTML = "";
+}
+function renderAllRecord(list = recordList){
+    if(list.length === 0){
+        recordBox.innerHTML = '<div class="empty-tip">暂无维修记录，请在左侧表单录入</div>';
+        return;
+    }
+    let html = `<table><tr><th>日期</th><th>阀区</th><th>维修人</th><th>耗材</th>${isAdmin?"<th>操作</th>":""}</tr>`;
+    list.forEach(item=>{
+        html += `<tr>
+            <td>${item.date}</td>
+            <td>${item.area}</td>
+            <td>${item.person}</td>
+            <td>${item.material}</td>
+            ${isAdmin ? `<td><button class="op-btn del-btn" data-id="${item.id}">删除</button></td>` : ""}
+        </tr>`;
+    })
+    html += "</table>";
+    recordBox.innerHTML = html;
+    if(isAdmin){
+        document.querySelectorAll(".del-btn").forEach(btn=>{
+            btn.onclick = function(){
+                const id = Number(this.dataset.id);
+                recordList = recordList.filter(d=>d.id !== id);
+                localStorage.setItem(RECORD_KEY, JSON.stringify(recordList));
+                renderAllRecord();
+                calcMonthStat();
+            }
+        })
+    }
+}
+searchBtn.onclick = function(){
+    const a = filterArea.value.trim();
+    const u = filterUser.value.trim();
+    const s = filterStart.value;
+    const e = filterEnd.value;
+    let res = recordList.filter(item=>{
+        let flag = true;
+        if(a && !item.area.includes(a)) flag = false;
+        if(u && !item.person.includes(u)) flag = false;
+        if(s && item.date < s) flag = false;
+        if(e && item.date > e) flag = false;
+        return flag;
+    })
+    renderAllRecord(res);
+}
+resetSearch.onclick = function(){
+    filterArea.value = "";
+    filterUser.value = "";
+    filterStart.value = "";
+    filterEnd.value = "";
+    renderAllRecord();
+}
+exportExcel.onclick = function(){
+    let csv = "日期,阀区,维修人,耗材,故障描述\n";
+    recordList.forEach(item=>{
+        csv += `${item.date},${item.area},${item.person},${item.material},${item.fault}\n`;
+    })
+    const blob = new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "维修台账.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+backupAll.onclick = function(){
+    const str = JSON.stringify(recordList,null,2);
+    const blob = new Blob([str],{type:"text/plain"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "台账完整备份.json";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// 月度统计
+function calcMonthStat(){
+    const now = new Date();
+    const curMonth = now.getMonth() + 1;
+    const curYear = now.getFullYear();
+    let monthData = recordList.filter(item=>{
+        const d = new Date(item.date);
+        return d.getFullYear() === curYear && (d.getMonth()+1) === curMonth;
+    })
+    totalMonth.innerText = monthData.length;
+    // 统计高频阀区
+    const areaMap = {};
+    monthData.forEach(item=>{
+        areaMap[item.area] = (areaMap[item.area] || 0) + 1;
+    })
+    let maxArea = "-";
+    let maxNum = 0;
+    for(let k in areaMap){
+        if(areaMap[k] > maxNum){
+            maxNum = areaMap[k];
+            maxArea = k;
+        }
+    }
+    hotArea.innerText = maxArea;
+    // 统计故障关键词简易判断
+    hotDevice.innerText = "管路/阀门";
+}
+
+// AI助手弹窗切换
+aiOpen.onclick = ()=> aiChatPanel.style.display = "flex";
+aiClose.onclick = ()=> aiChatPanel.style.display = "none";
+aiUploadImgBtn.onclick = ()=> aiImgFile.value = "";
+aiImgFile.onchange = function(){
+    const f = this.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+        aiUploadImgSrc = e.target.result;
+    }
+    reader.readAsDataURL(f);
+}
+aiClearImgBtn.onclick = function(){
+    aiUploadImgSrc = "";
+}
+aiSend.onclick = function(){
+    const text = aiInput.value.trim();
+    if(!text && !aiUploadImgSrc){
+        alert("请输入故障描述");
+        return;
+    }
+    const reply = "常见处理：\n1.管路堵塞：冲洗过滤器、疏通滴灌管\n2.压力不足：检查水泵、调压阀\n3.漏液：更换密封圈、紧固接头\n4.EC/PH异常：校正检测探头，更换母液配比";
+    const div = document.createElement("div");
+    div.className = "msg-user-input";
+    div.innerText = text;
+    aiMsgBox.appendChild(div);
+    const div2 = document.createElement("div");
+    div2.className = "msg-worker";
+    div2.innerText = reply;
+    aiMsgBox.appendChild(div2);
+    aiMsgBox.scrollTop = aiMsgBox.scrollHeight;
+    aiInput.value = "";
+    aiUploadImgSrc = "";
+}
+</script>
+</body>
+</html>
